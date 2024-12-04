@@ -1,13 +1,13 @@
 import telebot
 from telebot import types
 
-# Your bot's token
+
 API_TOKEN = '8022466350:AAFLDBUIMDRydgS7WO2GV-fT5r40kBxkuYs'
 
-# Initialize the bot
+
 bot = telebot.TeleBot(API_TOKEN)
 
-# Define the animals and their descriptions
+# Определение животныx и их описания
 animals = {
     "Енот-полоскун 🦝": {
         "description": "Вы любите исследовать мир и находить необычные решения.",
@@ -67,7 +67,7 @@ animals = {
         }
 }
 
-# Define the questions, answers, and their scoring for each animal
+# Определение вопросов, ответов и баллы для каждого животного.
 questions = [
     {
         "question": "Где вы чувствуете себя наиболее комфортно?",
@@ -107,10 +107,9 @@ questions = [
     }
 ]
 
-# Store user data
 user_results = {}
 
-# Start command
+# Команда старт
 @bot.message_handler(commands=["start"])
 def start(message):
     user_results[message.chat.id] = {"scores": {animal: 0 for animal in animals}, "current_question": 0}
@@ -119,12 +118,12 @@ def start(message):
     markup.add(btn)
     bot.send_message(message.chat.id, "Привет! 🐾 Я помогу узнать, какое животное из зоопарка станет вашим тотемом. ", reply_markup=markup)
 
-# Handle quiz start
+# Начало викторины
 @bot.message_handler(func=lambda message: message.text == "Начать викторину")
 def start_quiz(message):
     ask_question(message.chat.id)
 
-# Ask a question
+# Задать вопрос
 def ask_question(user_id):
     current_question = user_results[user_id]["current_question"]
     question_data = questions[current_question]
@@ -133,11 +132,11 @@ def ask_question(user_id):
         markup.add(types.KeyboardButton(answer))
     bot.send_message(user_id, question_data["question"], reply_markup=markup)
 
-# Handle the "Попробовать снова" button
+# Обработка кнопки "Попробовать снова"
 @bot.message_handler(func=lambda message: message.text == "Попробовать снова")
 def restart_quiz(message):
     user_id = message.chat.id
-    # Reset the user's progress
+    # Сбросить прогресс
     user_results[user_id] = {"scores": {animal: 0 for animal in animals}, "current_question": 0}
     bot.send_message(user_id, "Начинаем заново!")
     ask_question(user_id)
@@ -151,31 +150,31 @@ def guardianship_info(message):
     )
 
 
-# Handle user answers
+# Обработка ответов
 @bot.message_handler(func=lambda message: message.chat.id in user_results)
 def handle_answer(message):
     user_id = message.chat.id
     current_question = user_results[user_id]["current_question"]
     
-    # Check if the user is within the range of questions
+    # Проверка, находится ли пользователь в пределах вопросов
     if current_question < len(questions):
         question_data = questions[current_question]
         if message.text in question_data["answers"]:
-            # Update scores
+            # Обновить результат
             for animal, points in question_data["answers"][message.text].items():
                 user_results[user_id]["scores"][animal] += points
 
-            # Move to the next question or finish
+            # Переход к следующему вопросу или конец
             user_results[user_id]["current_question"] += 1
             if user_results[user_id]["current_question"] < len(questions):
                 ask_question(user_id)
             else:
-                # Calculate the result
+                # Подсчет результатов
                 scores = user_results[user_id]["scores"]
                 top_animal = max(scores, key=scores.get)
                 animal_data = animals[top_animal]
                 
-                # Send result photo and description
+                # Отправка результата, фото и другой информации
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
                 restart_button = types.KeyboardButton("Попробовать снова")
                 info_button = types.KeyboardButton("Узнать больше о программе опеки")
@@ -192,6 +191,5 @@ def handle_answer(message):
     else:
         bot.send_message(user_id, "Пожалуйста, начните заново, нажав 'Попробовать снова'.")
 
-# Run the bot
 if __name__ == "__main__":
     bot.polling(none_stop=True)
